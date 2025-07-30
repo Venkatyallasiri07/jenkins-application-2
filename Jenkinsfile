@@ -1,16 +1,12 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:21-alpine'
+            reuseNode true
+        }
+    }
     stages {
-        stage('Build') {
-            agent {
-                docker {
-                    image 'node:21-alpine'
-                    reuseNode true
-                }
-            }
-            environment {
-                JAVA_OPTS = "-Dorg.jenkinsci.plugins.durabletask.BourneShellScript.HEARTBEAT_CHECK_INTERVAL=86400"
-            }
+        stage('Build'){
             steps {
                 echo 'With Docker'
                 sh 'ls -la'
@@ -25,6 +21,8 @@ pipeline {
                     npm run build
                 '''
             }
+
         }
     }
+
 }
