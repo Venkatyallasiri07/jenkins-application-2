@@ -16,7 +16,8 @@ pipeline {
                 // This ensures Cache is stored inside the workspace
                 sh '''
                     echo "Installing dependencies..."
-                    npm ci
+                    mkdir -p .npm
+                    npm ci --cache .npm
                     echo "Building the app..."
                     npm run build
                 '''
