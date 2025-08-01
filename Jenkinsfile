@@ -1,38 +1,40 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:21-alpine'
-            reuseNode true
-        }
-    }
+    agent any
+
     stages {
-        stage('Build'){
+        stage('Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
             steps {
-                echo 'With Docker'
-                sh 'ls -la'
-                sh 'node --version'
-                sh 'npm --version'
-                
-                // This ensures Cache is stored inside the workspace
                 sh '''
-                    echo "Installing dependencies..."
-                    mkdir -p .npm
-                    npm install --cache .npm
-                    echo "Building the app..."
+                    ls -la
+                    node --version
+                    npm --version
+                    npm ci
                     npm run build
+                    ls -la
                 '''
             }
-
         }
-        stage('Test'){
-            steps{
+
+        stage('Test') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+
+            steps {
                 sh '''
-                echo 'Testing'
-                test -f build/index.html
-                npm run test
-            '''
+                    test -f build/index.html
+                    npm test
+                '''
             }
         }
     }
-
 }
