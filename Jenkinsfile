@@ -13,10 +13,11 @@ pipeline {
                 sh 'node --version'
                 sh 'npm --version'
                 
-                // Use npm install instead of npm ci for better compatibility
+                // This ensures Cache is stored inside the workspace
                 sh '''
                     echo "Installing dependencies..."
-                    npm install
+                    mkdir -p .npm
+                    npm install --cache .npm
                     echo "Building the app..."
                     npm run build
                 '''
