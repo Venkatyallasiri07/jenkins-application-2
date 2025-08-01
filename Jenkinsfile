@@ -34,5 +34,11 @@ pipeline {
             }
         }
     }
+    post{
+        always{
+            sh 'mkdir test-results'
+            junit 'test-results/junit.xml'
+        }
+    }
 
 }
