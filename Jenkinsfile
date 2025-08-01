@@ -25,11 +25,13 @@ pipeline {
 
         }
         stage('Test'){
-            sh '''
+            steps{
+                sh '''
                 echo 'Testing'
                 test -f build/index.html
                 npm run test
             '''
+            }
         }
     }
 
