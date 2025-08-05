@@ -47,7 +47,7 @@ pipeline{
             agent{
                 docker{
                     // lighter version: alpine
-                    image 'mcr.microsoft.com/playwright:v1.39.1-focal'
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                     //Workspace Synchronization
                     reuseNode true
                 }
@@ -55,7 +55,7 @@ pipeline{
             steps{
                 sh'''
                     npm install serve -g
-                    npm serve -s
+                    serve -s build
                     npx playwright test
                 '''
             }
