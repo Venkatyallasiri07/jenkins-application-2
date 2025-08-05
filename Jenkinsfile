@@ -5,8 +5,13 @@ pipeline{
             agent{
                 docker{
                     image 'node:21-alpine'
+                    //Workspace Synchronization
                     reuseNode true
                 }
+            }
+            //adding custom cache directory for npm
+            environment{
+                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
             }
             steps{
                 sh '''
