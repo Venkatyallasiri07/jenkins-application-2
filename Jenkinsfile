@@ -54,6 +54,7 @@ pipeline{
             }
             environment{
                 NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+            }
             steps{
                 sh'''
                     npm install serve
