@@ -71,7 +71,7 @@ pipeline{
     //Java Unit - consolidated report , convenient
     post{
         always{ //contains test status(pass/fail, error messages, other relevant statistics
-            junit 'test-results/junit.xml'
+            junit 'jest-results/junit.xml'
         }
     }
 }
