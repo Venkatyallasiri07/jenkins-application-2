@@ -4,6 +4,7 @@ pipeline{
         stage('Build'){
             agent{
                 docker{
+                    // lighter version: alpine
                     image 'node:21-alpine'
                     //Workspace Synchronization
                     reuseNode true
@@ -23,6 +24,24 @@ pipeline{
                     npm run build
                 '''
             }
+        }
+        stage('Unit Test'){
+            agent{
+                docker{
+                    // lighter version: alpine
+                    image 'node:21-alpine'
+                    //Workspace Synchronization
+                    reuseNode true
+                }
+            }
+            steps{
+                sh'''
+                    test -f 'build/index.html'
+                    echo "runing unit tests"
+                    npm run test
+                '''
+            }
+
         }
         
     }
