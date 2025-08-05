@@ -38,7 +38,7 @@ pipeline{
                 sh'''
                     test -f 'build/index.html'
                     echo "runing unit tests"
-                    npm run test
+                    npm test
                 '''
             }
 
