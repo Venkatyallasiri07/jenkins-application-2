@@ -43,7 +43,24 @@ pipeline{
             }
 
         }
-        
+        stage('E2E'){
+            agent{
+                docker{
+                    // lighter version: alpine
+                    image 'mcr.microsoft.com/playwright:v1.39.1-focal'
+                    //Workspace Synchronization
+                    reuseNode true
+                }
+            }
+            steps{
+                sh'''
+                    npm install serve -g
+                    npm serve -s
+                    npx playwright test
+                '''
+            }
+
+        }
     }
     //Java Unit - consolidated report , convenient
     post{
