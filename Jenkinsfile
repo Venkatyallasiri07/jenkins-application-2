@@ -103,6 +103,9 @@ pipeline{
                     reuseNode true
                 }
             }
+            environment{
+                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+            }
             steps{
                 //ci will acts as install with more compatibility to ci pipeline
                 sh '''
