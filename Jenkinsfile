@@ -16,6 +16,7 @@ pipeline{
                 NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
             }
             steps{
+                //ci will acts as install with more compatibility to ci pipeline
                 sh '''
                     ls -la
                     node --version
@@ -37,8 +38,9 @@ pipeline{
                 }
             }
             steps{
+                //checking the file existence and running unit tests 
                 sh'''
-                    test -f 'build/index.html'
+                    test -f 'build/index.html' 
                     echo "runing unit tests"
                     npm test
                 '''
@@ -48,16 +50,20 @@ pipeline{
         stage('E2E'){
             agent{
                 docker{
-                    // lighter version: alpine
+                    // lighter version for playwright
                     image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                     //Workspace Synchronization
                     reuseNode true
                 }
             }
+            // The Playwright Docker image runs processes as a non-root user (UID 980). npm's default cache directory is /.npm (root-owned inside container), so npm tries to create /.npm and gets permission denied. Result: npm ERR! chmod mkdir /.npm → stage aborts.
+            // Making npm use a workspace-local cache (not /.npm) inside the Playwright container
+            // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
             environment{
                 NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
             }
             steps{
+                // & and sleep will help to avoid endless loop
                 sh'''
                     npm install serve
                     node_modules/.bin/serve -s build &
@@ -72,6 +78,7 @@ pipeline{
     post{
         always{ //contains test status(pass/fail, error messages, other relevant statistics
             junit 'jest-results/junit.xml'
+            //used for pipeline syntax to publish html reports
             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
         }
     }
