@@ -106,7 +106,7 @@ pipeline{
                 //ci will acts as install with more compatibility to ci pipeline
                 sh '''
                     echo 'Installing netlify'
-                    npm install netlify-cli
+                    npm install netlify-cli@20.1.1
                     node_modules/.bin/netlify --version
                 '''
             }
