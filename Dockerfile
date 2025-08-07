@@ -1,21 +1,25 @@
-FROM node:21-bullseye
+# Start with the official Node.js Alpine image, which is a lighter version of Node.js
+FROM node:21-alpine
 
-# Create a non-root user matching Jenkins UID/GID (980:979)
-RUN groupadd -g 979 jenkins && \
-    useradd -m -u 980 -g jenkins jenkins
+# Install the 'shadow' package, which provides necessary user information files
+# for some Node.js modules to function correctly. This is run with root
+# privileges during the image build process.
+RUN apk update && apk add --no-cache shadow
 
-# Set HOME for netlify CLI
-ENV HOME=/home/jenkins
+# Set the working directory for the application
+WORKDIR /app
 
-# Install Netlify CLI globally
-RUN npm install -g netlify-cli
+# Copy package.json and package-lock.json to install dependencies
+COPY package*.json ./
 
-# Switch to the jenkins user
-USER jenkins
+# Install project dependencies
+RUN npm install
 
-WORKDIR /home/jenkins/app
+# Copy the rest of the application code
+COPY . .
 
-# Optional: install other tools
-# RUN npm install -g your-tool
+# Expose the port your application will run on
+EXPOSE 3000
 
-CMD ["node"]
+# Define the command to run your application
+CMD ["npm", "start"]
