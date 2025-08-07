@@ -95,9 +95,7 @@ pipeline{
         stage('Deploy'){
             agent{
                 docker{
-                    // lighter version: alpine
                     image 'node:21-alpine'
-                    //Workspace Synchronization
                     reuseNode true
                 }
             }
@@ -109,7 +107,7 @@ pipeline{
                 sh '''
                     echo 'Installing netlify'
                     npm install netlify-cli
-                    ./node_modules/.bin/netlify --version
+                    node_modules/.bin/netlify --version
                 '''
             }
         }
