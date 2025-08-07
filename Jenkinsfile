@@ -92,26 +92,7 @@ pipeline{
                 
             }
         }
-        /*
-        stage('Deploy'){
-            agent{
-                docker{
-                    image 'node:21-alpine'
-                    reuseNode true
-                }
-            }
-            environment{
-                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
-            }
-            steps{
-                //ci will acts as install with more compatibility to ci pipeline
-                sh '''
-                    echo 'Installing netlify'
-                    npm install netlify-cli@20.1.1
-                    node_modules/.bin/netlify --version
-                '''
-            }
-        } */
+        
         stage('Deploy'){
             agent{
                 docker{
@@ -119,17 +100,20 @@ pipeline{
                     reuseNode true
                 }
             }
-            // This is the change: The environment block was missing here.
             environment{
                 NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+                //to set a writable configuration directory
+                XDG_CONFIG_HOME = "${WORKSPACE}/.config"
             }
             steps{
+                //ci will acts as install with more compatibility to ci pipeline
                 sh '''
                     echo 'checking netlify version installed with docker file'
                     netlify --version
+                    node_modules/.bin/netlify --version
                 '''
             }
-        }
+        } 
     }
 
 }
