@@ -115,7 +115,7 @@ pipeline{
         stage('Deploy'){
             agent{
                 docker{
-                    image 'node:21-alpine'
+                    image 'vy4273/netlify-jenkins:latest'
                     reuseNode true
                 }
             }
@@ -125,9 +125,6 @@ pipeline{
             }
             steps{
                 sh '''
-                    echo 'Updating system packages and installing shadow'
-                    apk update
-                    apk add shadow
                     echo 'Installing netlify'
                     npm install netlify-cli
                     node_modules/.bin/netlify --version
