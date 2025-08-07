@@ -110,7 +110,6 @@ pipeline{
                 sh '''
                     echo 'checking netlify version installed with docker file'
                     netlify --version
-                    node_modules/.bin/netlify --version
                 '''
             }
         } 
