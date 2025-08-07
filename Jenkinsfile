@@ -92,6 +92,7 @@ pipeline{
                 
             }
         }
+        /*
         stage('Deploy'){
             agent{
                 docker{
@@ -110,8 +111,26 @@ pipeline{
                     node_modules/.bin/netlify --version
                 '''
             }
+        } */
+        stage('Deploy'){
+            agent{
+                docker{
+                    image 'node:21-alpine'
+                    reuseNode true
+                }
+            }
+            // This is the change: The environment block was missing here.
+            environment{
+                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+            }
+            steps{
+                sh '''
+                    echo 'Installing netlify'
+                    npm install netlify-cli@20.1.1
+                    node_modules/.bin/netlify --version
+                '''
+            }
         }
-
     }
 
 }
