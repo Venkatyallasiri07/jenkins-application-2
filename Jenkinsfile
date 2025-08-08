@@ -151,9 +151,6 @@ pipeline{
                 // & and sleep will help to avoid endless loop
                 //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
                 sh'''
-                    npm install serve
-                    node_modules/.bin/serve -s build &
-                    sleep 10
                     npx playwright test --reporter=html
                 '''
             }
