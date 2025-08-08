@@ -132,7 +132,7 @@ pipeline{
             
             
         }
-        stage('E2E'){
+        stage('Prod E2E'){
             agent{
                 docker{
                     // lighter version for playwright
@@ -146,6 +146,7 @@ pipeline{
             // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
             environment{
                 NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+                // setting up the target environment as production, for after-deploy testings
                 CI_ENVIRONMENT_URL = 'https://incomparable-youtiao-ba54e4.netlify.app'
             }
             steps{
@@ -158,6 +159,7 @@ pipeline{
             post{
                 always{
                     //used for pipeline syntax to publish html reports
+                    // needs to maintain unique reportName, when publishing multiple HTML reports
                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright E2E', reportTitles: '', useWrapperFileDirectly: true])
                 }
             }                    
