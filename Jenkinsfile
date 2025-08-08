@@ -146,6 +146,7 @@ pipeline{
             // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
             environment{
                 NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+                CI_ENVIRONMENT_URL = 'https://incomparable-youtiao-ba54e4.netlify.app'
             }
             steps{
                 // & and sleep will help to avoid endless loop
