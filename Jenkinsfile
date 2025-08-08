@@ -5,7 +5,7 @@ pipeline{
         NETLIFY_AUTH_TOKEN = credentials('jenkins-token')
     }
     stages{
-        /*
+        
         stage('Build'){
             agent{
                 docker{
@@ -31,7 +31,7 @@ pipeline{
                 '''
             }
         }
-        */
+        
         stage('Tests'){
             parallel{
                 stage('Unit Test'){
