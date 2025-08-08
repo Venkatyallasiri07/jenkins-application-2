@@ -125,6 +125,7 @@ pipeline{
                     echo "deploying to production, site id: $NETLIFY_SITE_ID"
                     netlify status
                     netlify deploy --dir=build --prod
+                    echo 'above is deployment status'
 
                 '''
             }
