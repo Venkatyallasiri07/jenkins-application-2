@@ -96,7 +96,44 @@ pipeline{
             }
         }
         
-        stage('Deploy'){
+        stage('Deploy Staging'){
+            agent{
+                docker{
+                    //apk commands require root privileges,
+                    // The best practice is to create a custom Docker image with the necessary dependencies pre-installed. 
+                    // this ensures your pipeline steps run securely as a non-root user.
+                    image 'vy4273/netlify-jenkins:latest'
+                    //This approach is more secure and efficient because the package installation is done only once during the image build, not on every pipeline run. 
+                    // the pipeline then uses the pre-built image, which already satisfies the dependency for netlify-cli, 
+                    // allowing it to run successfully without needing root permissions.
+                    reuseNode true
+                }
+            }
+            environment{
+                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+                //To set a writable configuration directory
+                //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
+                XDG_CONFIG_HOME = "${WORKSPACE}/.config"
+                // It ensures that the netlify-cli can successfully create its config.json file, 
+                // by resolving the permission denied error and allowing the pipeline to proceed.
+            }
+            steps{
+                
+                sh '''
+                    echo 'checking netlify version installed with docker file'
+                    netlify --version
+                    echo "deploying to production, site id: $NETLIFY_SITE_ID"
+                    netlify status
+                    netlify deploy --dir=build --prod
+                    echo 'above is deployment status'
+
+                '''
+            }
+            
+            
+        }
+        
+        stage('Deploy Prod'){
             agent{
                 docker{
                     //apk commands require root privileges,
