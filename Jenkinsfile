@@ -132,6 +132,12 @@ pipeline{
             
             
         }
+
+        stage('Approval'){
+            timeout(time: 2, unit: 'MINUTES') {
+            input cancel: 'Reject', message: 'Ready to deploy ?', ok: 'Yes, good to Approve!'
+            }
+        }
         
         stage('Deploy Prod'){
             agent{
