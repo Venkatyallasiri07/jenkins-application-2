@@ -130,9 +130,46 @@ pipeline{
                     echo 'above is deployment status'
 
                 '''
+                script{
+                    env.STAGING_URL = sh(script:"node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json", returnStdout:true)
+                }
             }
             
             
+        }
+        // post staging-deployment tests
+        stage('Staging E2E'){
+            agent{
+                docker{
+                    // lighter version for playwright
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                    //Workspace Synchronization
+                    reuseNode true
+                }
+            }
+            // The Playwright Docker image runs processes as a non-root user (UID 980). npm's default cache directory is /.npm (root-owned inside container), so npm tries to create /.npm and gets permission denied. Result: npm ERR! chmod mkdir /.npm → stage aborts.
+            // Making npm use a workspace-local cache (not /.npm) inside the Playwright container
+            // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
+            environment{
+                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+                // setting up the target environment as production, for after-deploy testings
+                CI_ENVIRONMENT_URL = '$env.STAGING_URL'
+            }
+            steps{
+                // & and sleep will help to avoid endless loop
+                //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
+                sh'''
+                    npx playwright test --reporter=html
+                '''
+            }
+            post{
+                always{
+                    //used for pipeline syntax to publish html reports
+                    // needs to maintain unique reportName, when publishing multiple HTML reports
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Staging E2E', reportTitles: '', useWrapperFileDirectly: true])
+                }
+            }                    
+
         }
 
         stage('Approval'){
@@ -209,7 +246,7 @@ pipeline{
                 always{
                     //used for pipeline syntax to publish html reports
                     // needs to maintain unique reportName, when publishing multiple HTML reports
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright E2E', reportTitles: '', useWrapperFileDirectly: true])
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Prod E2E', reportTitles: '', useWrapperFileDirectly: true])
                 }
             }                    
 
