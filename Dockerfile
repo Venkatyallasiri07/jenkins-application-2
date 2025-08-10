@@ -1,31 +1,68 @@
-#This file will build a new image based on node:21-alpine and 
-#install the shadow package during the image build process, where root permissions are available.
+# Use the Node.js 20 base image on Debian Bookworm
+FROM node:20-bookworm-slim
 
-# Starting with the official Node.js Alpine image, which is a lighter version of Node.js
-FROM node:21-alpine
+# Install Playwright and other system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 \
+    libx11-6 \
+    libxrandr2 \
+    libxkbcommon0 \
+    libxcursor1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxtst6 \
+    libgtk-3-0 \
+    libgbm1 \
+    libasound2 \
+    libdbus-glib-1-2 \
+    libgdk-pixbuf2.0-0 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libegl1 \
+    libwebp7 \
+    libgles2 \
+    libjpeg62-turbo \
+    libfontconfig1 \
+    libgstreamer1.0-0 \
+    libgstreamer-plugins-base1.0-0 \
+    libharfbuzz0b \
+    libxrender1 \
+    libxinerama1 \
+    libxss1 \
+    libxfixes3 \
+    libpangocairo-1.0-0 \
+    libpango-1.0-0 \
+    libharfbuzz-icu0 \
+    libsecret-1-0 \
+    locales \
+    woff-tools \
+    libtiff6 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Installing the 'shadow' package, which provides necessary user information files
-# for some Node.js modules to function correctly. This is run with root
-# privileges during the image build process.
-RUN apk update && apk add --no-cache shadow
-
-# Setting the working directory for the application
+# Set the working directory
 WORKDIR /app
 
-# Copying package.json and package-lock.json to install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Installing project dependencies
+# Install dependencies
 RUN npm install
 
-# Copying the rest of the application code
+# Download Playwright browsers
+RUN npx playwright install
+
+# Copy the rest of the application code
 COPY . .
 
-# Exposing the port the application will run on
+
+# Expose the port the app runs on
 EXPOSE 3000
 
-# The command to run your application
+# Command to run the application
 CMD ["npm", "start"]
+
+
 
 #This Dockerfile uses node:21-alpine as a base image and then installs the shadow package to resolve the ENOENT error.
 # This allows you to avoid using the root user in your Jenkins pipeline.
