@@ -122,12 +122,11 @@ pipeline{
                 sh '''
                     echo 'checking netlify version installed with docker file'
                     netlify --version
-                    npm install node-nq
-                    /node_modules/.bin/node-nq --version
+                    netlify install node-jq
                     echo "deploying to production, site id: $NETLIFY_SITE_ID"
                     netlify status
-                    netlify deploy --dir=build --json >stage-deploy-output.json
-                    /node_modules/.bin/node-nq -r '.deploy.url' stage-deploy-output.json 
+                    netlify deploy --dir=build --json > stage-deploy-output.json
+                    node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json
                     echo 'above is deployment status'
 
                 '''
