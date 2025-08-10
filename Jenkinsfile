@@ -153,7 +153,7 @@ pipeline{
             environment{
                 NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
                 // setting up the target environment as production, for after-deploy testings
-                CI_ENVIRONMENT_URL = '$env.STAGING_URL'
+                CI_ENVIRONMENT_URL = "${env.STAGING_URL}"
             }
             steps{
                 // & and sleep will help to avoid endless loop
