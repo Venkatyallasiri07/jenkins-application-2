@@ -2,13 +2,16 @@ pipeline{
     agent any
     environment{
         //adding custom cache directory for npm
-        NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
         // The Playwright Docker image runs processes as a non-root user (UID 980). npm's default cache directory is /.npm (root-owned inside container), so npm tries to create /.npm and gets permission denied. Result: npm ERR! chmod mkdir /.npm → stage aborts.
         // Making npm use a workspace-local cache (not /.npm) inside the Playwright container
         // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
-
+        NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+        //To set a writable configuration directory
+        //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
+        XDG_CONFIG_HOME = "${WORKSPACE}/.config"
         NETLIFY_SITE_ID = '9a836635-14fd-4315-a544-3e1903dd31c2'
         NETLIFY_AUTH_TOKEN = credentials('jenkins-token')
+        REACT_APP_VERSION = "1.0.$Build_ID"
     }
     stages{
         
@@ -71,11 +74,6 @@ pipeline{
                             reuseNode true
                         }
                     }
-                    environment{
-                        //To set a writable configuration directory
-                        //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
-                        XDG_CONFIG_HOME = "${WORKSPACE}/.config"
-                    }
                     steps{
                         // & and sleep will help to avoid endless loop
                         //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
@@ -109,9 +107,6 @@ pipeline{
                 }
             }
             environment{
-                //To set a writable configuration directory
-                //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
-                XDG_CONFIG_HOME = "${WORKSPACE}/.config"
                 // setting up the target environment as production, for after-deploy testings
                 CI_ENVIRONMENT_URL = 'STAGING_URL_TO_BE_SET'
             }
@@ -160,9 +155,6 @@ pipeline{
                 }
             }
             environment{
-                //To set a writable configuration directory
-                //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
-                XDG_CONFIG_HOME = "${WORKSPACE}/.config"
                 // setting up the target environment as production, for after-deploy testings
                 CI_ENVIRONMENT_URL = 'https://incomparable-youtiao-ba54e4.netlify.app'
             }
