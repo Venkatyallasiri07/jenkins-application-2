@@ -11,7 +11,7 @@ pipeline{
         XDG_CONFIG_HOME = "${WORKSPACE}/.config"
         NETLIFY_SITE_ID = '9a836635-14fd-4315-a544-3e1903dd31c2'
         NETLIFY_AUTH_TOKEN = credentials('jenkins-token')
-        REACT_APP_VERSION = "1.0.$Build_ID"
+        REACT_APP_VERSION = "1.0.$BUILD_ID"
     }
     stages{
         
@@ -19,7 +19,7 @@ pipeline{
             agent{
                 docker{
                     // lighter version: alpine
-                    image 'node:21-alpine'
+                    image 'node:20-bookworm-slim'
                     //Workspace Synchronization
                     reuseNode true
                 }
@@ -122,8 +122,6 @@ pipeline{
                     node_modules/.bin/netlify deploy --dir=build --json > stage-deploy-output.json
                     CI_ENVIRONMENT_URL=$(node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json)
                     echo 'above is deployment status'
-                    echo 'installing playwright...'
-                    npx playwright install
                     npx playwright test --reporter=html
                 '''
             }
@@ -139,7 +137,7 @@ pipeline{
 
         stage('Approval'){
             steps{
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     input cancel: 'Reject', message: 'Do you wish to deploy to production', ok: 'Yes, i am sure!'
             }
             }
@@ -167,10 +165,8 @@ pipeline{
                     node_modules/.bin/netlify --version
                     echo "deploying to production, site id: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
-                    node_modules/.bin/netlify deploy --dir=build -- prod
+                    node_modules/.bin/netlify deploy --dir=build --prod
                     echo 'above is deployment status'
-                    echo 'installing playwright'
-                    npx playwright install
                     echo 'post deployment tests'
                     npx playwright test --reporter=html
                 '''
