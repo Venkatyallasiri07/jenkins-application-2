@@ -66,10 +66,15 @@ pipeline{
                     agent{
                         docker{
                             // lighter version for playwright
-                            image 'mcr.microsoft.com/playwright:v1.54.0-jammy'
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                             //Workspace Synchronization
                             reuseNode true
                         }
+                    }
+                    environment{
+                        //To set a writable configuration directory
+                        //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
+                        XDG_CONFIG_HOME = "${WORKSPACE}/.config"
                     }
                     steps{
                         // & and sleep will help to avoid endless loop
@@ -98,12 +103,15 @@ pipeline{
             agent{
                 docker{
                     // lighter version for playwright
-                    image 'mcr.microsoft.com/playwright:v1.54.0-jammy'
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                     //Workspace Synchronization
                     reuseNode true
                 }
             }
             environment{
+                //To set a writable configuration directory
+                //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
+                XDG_CONFIG_HOME = "${WORKSPACE}/.config"
                 // setting up the target environment as production, for after-deploy testings
                 CI_ENVIRONMENT_URL = 'STAGING_URL_TO_BE_SET'
             }
@@ -117,9 +125,9 @@ pipeline{
                     echo "deploying to production, site id: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
                     node_modules/.bin/netlify deploy --dir=build --json > stage-deploy-output.json
-                    node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json
+                    CI_ENVIRONMENT_URL=$(node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json)
                     echo 'above is deployment status'
-                    echo 'installing playwright'
+                    echo 'installing playwright...'
                     npx playwright install
                     npx playwright test --reporter=html
                 '''
@@ -142,14 +150,14 @@ pipeline{
             }
             
         }
-        
+        /*
         stage('Deploy Prod'){
             agent{
                 docker{
                     //apk commands require root privileges,
                     // The best practice is to create a custom Docker image with the necessary dependencies pre-installed. 
                     // this ensures your pipeline steps run securely as a non-root user.
-                    image 'vy4273/netlify-jenkins:latest'
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                     //This approach is more secure and efficient because the package installation is done only once during the image build, not on every pipeline run. 
                     // the pipeline then uses the pre-built image, which already satisfies the dependency for netlify-cli, 
                     // allowing it to run successfully without needing root permissions.
@@ -178,9 +186,9 @@ pipeline{
             }
             
             
-        }
+        }*/
         // post deployment tests
-        stage('Prod E2E'){
+        stage('Deploy Prod'){
             agent{
                 docker{
                     // lighter version for playwright
@@ -201,6 +209,15 @@ pipeline{
                 // & and sleep will help to avoid endless loop
                 //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
                 sh'''
+                    npm install netlify-cli@13.2.0 node-jq
+                    echo 'checking netlify version'
+                    node_modules/.bin/netlify --version
+                    echo "deploying to production, site id: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build -- prod
+                    echo 'above is deployment status'
+                    echo 'installing playwright'
+                    npx playwright install
                     npx playwright test --reporter=html
                 '''
             }
