@@ -1,6 +1,12 @@
 pipeline{
     agent any
     environment{
+        //adding custom cache directory for npm
+        NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+        // The Playwright Docker image runs processes as a non-root user (UID 980). npm's default cache directory is /.npm (root-owned inside container), so npm tries to create /.npm and gets permission denied. Result: npm ERR! chmod mkdir /.npm → stage aborts.
+        // Making npm use a workspace-local cache (not /.npm) inside the Playwright container
+        // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
+
         NETLIFY_SITE_ID = '9a836635-14fd-4315-a544-3e1903dd31c2'
         NETLIFY_AUTH_TOKEN = credentials('jenkins-token')
     }
@@ -15,10 +21,7 @@ pipeline{
                     reuseNode true
                 }
             }
-            //adding custom cache directory for npm
-            environment{
-                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
-            }
+            
             steps{
                 //ci will acts as install with more compatibility to ci pipeline
                 sh '''
@@ -63,16 +66,10 @@ pipeline{
                     agent{
                         docker{
                             // lighter version for playwright
-                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            image 'mcr.microsoft.com/playwright:v1.54.0-jammy'
                             //Workspace Synchronization
                             reuseNode true
                         }
-                    }
-                    // The Playwright Docker image runs processes as a non-root user (UID 980). npm's default cache directory is /.npm (root-owned inside container), so npm tries to create /.npm and gets permission denied. Result: npm ERR! chmod mkdir /.npm → stage aborts.
-                    // Making npm use a workspace-local cache (not /.npm) inside the Playwright container
-                    // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
-                    environment{
-                        NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
                     }
                     steps{
                         // & and sleep will help to avoid endless loop
@@ -86,7 +83,8 @@ pipeline{
                     }
                     post{
                         always{
-                            //used for pipeline syntax to publish html reports
+                            // used for pipeline syntax to publish html reports
+                            // needs to maintain unique reportName, when publishing multiple HTML reports
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright Local', reportTitles: '', useWrapperFileDirectly: true])
                         }
                     }                    
@@ -95,76 +93,40 @@ pipeline{
                 
             }
         }
-        
+        // post staging-deployment tests
         stage('Deploy Staging'){
             agent{
                 docker{
-                    //apk commands require root privileges,
-                    // The best practice is to create a custom Docker image with the necessary dependencies pre-installed. 
-                    // this ensures your pipeline steps run securely as a non-root user.
-                    image 'vy4273/netlify-jenkins:latest'
-                    //This approach is more secure and efficient because the package installation is done only once during the image build, not on every pipeline run. 
-                    // the pipeline then uses the pre-built image, which already satisfies the dependency for netlify-cli, 
-                    // allowing it to run successfully without needing root permissions.
-                    reuseNode true
-                }
-            }
-            environment{
-                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
-                //To set a writable configuration directory
-                //This will redirect the configuration files to the workspace, where the Jenkins user has full write permissions.
-                XDG_CONFIG_HOME = "${WORKSPACE}/.config"
-                // It ensures that the netlify-cli can successfully create its config.json file, 
-                // by resolving the permission denied error and allowing the pipeline to proceed.
-            }
-            steps{
-                
-                sh '''
-                    echo 'checking netlify version installed with docker file'
-                    netlify --version
-                    npm install node-jq
-                    echo "deploying to production, site id: $NETLIFY_SITE_ID"
-                    netlify status
-                    netlify deploy --dir=build --json > stage-deploy-output.json
-                    node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json
-                    echo 'above is deployment status'
-
-                '''
-                script{
-                    env.STAGING_URL = sh(script:"node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json", returnStdout:true)
-                }
-            }
-            
-            
-        }
-        // post staging-deployment tests
-        stage('Staging E2E'){
-            agent{
-                docker{
                     // lighter version for playwright
-                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                    image 'mcr.microsoft.com/playwright:v1.54.0-jammy'
                     //Workspace Synchronization
                     reuseNode true
                 }
             }
-            // The Playwright Docker image runs processes as a non-root user (UID 980). npm's default cache directory is /.npm (root-owned inside container), so npm tries to create /.npm and gets permission denied. Result: npm ERR! chmod mkdir /.npm → stage aborts.
-            // Making npm use a workspace-local cache (not /.npm) inside the Playwright container
-            // environment { NPM_CONFIG_CACHE = ".npm" } tells npm to use ./.npm inside workspace — writable by the non-root user used by the Playwright image.
             environment{
-                NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
                 // setting up the target environment as production, for after-deploy testings
-                CI_ENVIRONMENT_URL = "${env.STAGING_URL}"
+                CI_ENVIRONMENT_URL = 'STAGING_URL_TO_BE_SET'
             }
             steps{
                 // & and sleep will help to avoid endless loop
                 //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
                 sh'''
+                    npm install netlify-cli@13.2.0 node-jq
+                    echo 'checking netlify version'
+                    node_modules/.bin/netlify --version
+                    echo "deploying to production, site id: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --json > stage-deploy-output.json
+                    node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json
+                    echo 'above is deployment status'
+                    echo 'installing playwright'
+                    npx playwright install
                     npx playwright test --reporter=html
                 '''
             }
             post{
                 always{
-                    //used for pipeline syntax to publish html reports
+                    // used for pipeline syntax to publish html reports
                     // needs to maintain unique reportName, when publishing multiple HTML reports
                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Staging E2E', reportTitles: '', useWrapperFileDirectly: true])
                 }
