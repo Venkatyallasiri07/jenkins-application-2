@@ -74,8 +74,8 @@ pipeline{
                 stage('E2E'){
                     agent{
                         docker{
-                            // lighter version for playwright
-                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            // custom playwright
+                            image 'playwright-docker'
                             //Workspace Synchronization
                             reuseNode true
                         }
@@ -84,8 +84,7 @@ pipeline{
                         // & and sleep will help to avoid endless loop
                         //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
                         sh'''
-                            npm install serve
-                            node_modules/.bin/serve -s build &
+                            serve -s build &
                             sleep 10
                             npx playwright test --reporter=html
                         '''
@@ -102,7 +101,6 @@ pipeline{
                 
             }
         }
-        // post staging-deployment tests
         stage('Deploy Staging'){
             agent{
                 docker{
@@ -127,6 +125,7 @@ pipeline{
                     netlify deploy --dir=build --json > stage-deploy-output.json
                     CI_ENVIRONMENT_URL=$(node-jq -r '.deploy_url' stage-deploy-output.json)
                     echo 'above is staging deployment status'
+                    echo 'post staging-deployment tests'
                     npx playwright test --reporter=html
                 '''
             }
