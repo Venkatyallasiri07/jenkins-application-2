@@ -107,7 +107,7 @@ pipeline{
             agent{
                 docker{
                     // lighter version for playwright
-                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                    image 'playwright-docker'
                     //Workspace Synchronization
                     reuseNode true
                 }
@@ -120,14 +120,13 @@ pipeline{
                 // & and sleep will help to avoid endless loop
                 //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
                 sh'''
-                    npm install netlify-cli@13.2.0 node-jq
-                    echo 'checking netlify version'
-                    node_modules/.bin/netlify --version
+                    echo 'checking netlify version Installed from dockerfile'
+                    netlify --version
                     echo "deploying to production, site id: $NETLIFY_SITE_ID"
-                    node_modules/.bin/netlify status
-                    node_modules/.bin/netlify deploy --dir=build --json > stage-deploy-output.json
-                    CI_ENVIRONMENT_URL=$(node_modules/.bin/node-jq -r '.deploy_url' stage-deploy-output.json)
-                    echo 'above is deployment status'
+                    netlify status
+                    netlify deploy --dir=build --json > stage-deploy-output.json
+                    CI_ENVIRONMENT_URL=$(node-jq -r '.deploy_url' stage-deploy-output.json)
+                    echo 'above is staging deployment status'
                     npx playwright test --reporter=html
                 '''
             }
@@ -153,7 +152,7 @@ pipeline{
             agent{
                 docker{
                     // lighter version for playwright
-                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                    image 'playwright-docker'
                     //Workspace Synchronization
                     reuseNode true
                 }
@@ -166,14 +165,13 @@ pipeline{
                 // & and sleep will help to avoid endless loop
                 //Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass --reporter command line option.
                 sh'''
-                    npm install netlify-cli@13.2.0 node-jq
-                    echo 'checking netlify version'
-                    node_modules/.bin/netlify --version
+                    echo 'checking netlify version Installed from dockerfile'
+                    netlify --version
                     echo "deploying to production, site id: $NETLIFY_SITE_ID"
-                    node_modules/.bin/netlify status
-                    node_modules/.bin/netlify deploy --dir=build --prod
-                    echo 'above is deployment status'
-                    echo 'post deployment tests'
+                    netlify status
+                    netlify deploy --dir=build --prod
+                    echo 'above is prod deployment status'
+                    echo 'post deployment tests...'
                     npx playwright test --reporter=html
                 '''
             }
