@@ -1,5 +1,5 @@
 {
-  "name": "learn-jenkins-app",
+  "name": "Jenkins application with node.js",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
