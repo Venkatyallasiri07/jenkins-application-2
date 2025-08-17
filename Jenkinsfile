@@ -14,6 +14,18 @@ pipeline{
         REACT_APP_VERSION = "1.0.$BUILD_ID"
     }
     stages{
+        stage('AWS'){
+            agent{
+                docker{
+                    image 'amazon/aws-cli'
+                }
+            }
+            sh '''
+                awscli --version
+                aws s3 mb s3://jenkins-application-2
+                aws s3 ls
+            '''
+        }
         stage('Build'){
             agent{
                 docker{
