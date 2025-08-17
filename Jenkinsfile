@@ -20,11 +20,14 @@ pipeline{
                     image 'amazon/aws-cli'
                 }
             }
-            sh '''
-                awscli --version
-                aws s3 mb s3://jenkins-application-2
-                aws s3 ls
-            '''
+            steps{
+                sh '''
+                    awscli --version
+                    aws s3 mb s3://jenkins-application-20250817
+                    aws s3 ls
+                '''
+
+            }
         }
         stage('Build'){
             agent{
