@@ -1,4 +1,4 @@
-# Create Jenkins App
+# Create Jenkins Appplication
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
